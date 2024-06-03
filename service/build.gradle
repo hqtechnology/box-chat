@@ -1,0 +1,102 @@
+buildscript {
+    ext {
+        springBootVersion = '3.3.0'
+    }
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        mavenCentral()
+    }
+    dependencies {
+        classpath "io.freefair.gradle:lombok-plugin:8.3"
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath "gradle.plugin.org.flywaydb:gradle-plugin-publishing:10.8.1"
+        classpath "com.github.eirslett:frontend-maven-plugin:1.15.0"
+    }
+}
+
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'org.springframework.boot' version "${springBootVersion}"
+    id 'io.spring.dependency-management' version '1.1.5'
+    id "org.flywaydb.flyway" version "10.8.1"
+//    id "com.github.eirslett:frontend-maven-plugin" version "1.15.0"
+}
+
+apply plugin: "io.freefair.lombok"
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: "org.flywaydb.flyway"
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven { url 'https://repo.spring.io/milestone' }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+archivesBaseName = 'box-chat'
+
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
+    implementation group: 'org.postgresql', name: 'postgresql', version: '42.3.8'
+    //implementation group: 'javax.persistence', name: 'javax.persistence-api', version: '2.2'
+    //implementation group: 'log4j', name: 'log4j', version: '1.2.17'
+    //implementation(group: 'javax.inject', name: 'javax.inject', version: '1')
+    //implementation group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
+
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webflux-ui', version: '2.2.0'
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-api', version: '2.2.0'
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.2.0'
+
+    //implementation 'org.hibernate.validator:hibernate-validator:6.1.3.Final'
+
+    compileOnly "org.projectlombok:lombok:1.18.30"
+    implementation "org.aspectj:aspectjrt:1.9.8.RC3"
+    implementation group: 'org.mapstruct', name: 'mapstruct', version: '1.5.5.Final'
+    implementation group: 'org.mapstruct', name: 'mapstruct-processor', version: '1.5.5.Final'
+    implementation group: 'org.projectlombok', name: 'lombok-mapstruct-binding', version: '0.2.0'
+
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+    implementation 'io.jsonwebtoken:jjwt:0.12.5'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+    testImplementation group: 'org.mockito', name: 'mockito-inline', version: '4.3.1'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+springBoot {
+    mainClass = "com.h12.box_chat.ApplicationMain"
+}
+
+compileJava.dependsOn ':frontend:build'
+
+tasks.register('copyWebApp', Copy) {
+    dependsOn(":frontend:build")
+    from "$rootDir/frontend/build/webapp/"
+    into "$rootDir/service/build/resources/main/"
+}
+build.dependsOn(copyWebApp)
+bootJar.dependsOn(copyWebApp)
+resolveMainClassName.dependsOn(copyWebApp)
+jar.dependsOn(copyWebApp)
+
+tasks.register("prepareKotlinBuildScriptModel") {}
